@@ -16,10 +16,10 @@ You may also see any lint errors in the console.
 
 ### 'Databases.sol'
 
+
+
 // SPDX-License-Identifier: GPL-3.0
-
 pragma solidity >=0.7.0 <0.9.0;
-
 contract Database {
 
     // Stores the default name of an user and her friends info
