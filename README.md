@@ -14,57 +14,124 @@ Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
-### `npm test`
+### 'Databases.sol'
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+// SPDX-License-Identifier: GPL-3.0
 
-### `npm run build`
+pragma solidity >=0.7.0 <0.9.0;
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+contract Database {
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    // Stores the default name of an user and her friends info
+    struct user {
+        string name;
+        friend[] friendList;
+    }
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+    // Each friend is identified by its address and name assigned by the second party
+    struct friend {
+        address pubkey;
+        string name;
+    }
 
-### `npm run eject`
+    // message construct stores the single chat message and its metadata
+    struct message {
+        address sender;
+        uint256 timestamp;
+        string msg;
+    }
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+    // Collection of users registered on the application
+    mapping(address => user) userList;
+    // Collection of messages communicated in a channel between two users
+    mapping(bytes32 => message[]) allMessages; // key : Hash(user1,user2)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+    // It checks whether a user(identified by its public key)
+    // has created an account on this application or not
+    function checkUserExists(address pubkey) public view returns(bool) {
+        return bytes(userList[pubkey].name).length > 0;
+    }
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+    // Registers the caller(msg.sender) to our app with a non-empty username
+    function createAccount(string calldata name) external {
+        require(checkUserExists(msg.sender)==false, "User already exists!");
+        require(bytes(name).length>0, "Username cannot be empty!"); 
+        userList[msg.sender].name = name;
+    }
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+    // Returns the default name provided by an user
+    function getUsername(address pubkey) external view returns(string memory) {
+        require(checkUserExists(pubkey), "User is not registered!");
+        return userList[pubkey].name;
+    }
 
-## Learn More
+    // Adds new user as your friend with an associated nickname
+    function addFriend(address friend_key, string calldata name) external {
+        require(checkUserExists(msg.sender), "Create an account first!");
+        require(checkUserExists(friend_key), "User is not registered!");
+        require(msg.sender!=friend_key, "Users cannot add themselves as friends!");
+        require(checkAlreadyFriends(msg.sender,friend_key)==false, "These users are already friends!");
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+        _addFriend(msg.sender, friend_key, name);
+        _addFriend(friend_key, msg.sender, userList[msg.sender].name);
+    }
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    // Checks if two users are already friends or not
+    function checkAlreadyFriends(address pubkey1, address pubkey2) internal view returns(bool) {
 
-### Code Splitting
+        if(userList[pubkey1].friendList.length > userList[pubkey2].friendList.length)
+        {
+            address tmp = pubkey1;
+            pubkey1 = pubkey2;
+            pubkey2 = tmp;
+        }
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+        for(uint i=0; i<userList[pubkey1].friendList.length; ++i)
+        {
+            if(userList[pubkey1].friendList[i].pubkey == pubkey2)
+                return true;
+        }
+        return false;
+    }
 
-### Analyzing the Bundle Size
+    // A helper function to update the friendList
+    function _addFriend(address me, address friend_key, string memory name) internal {
+        friend memory newFriend = friend(friend_key,name);
+        userList[me].friendList.push(newFriend);
+    }
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+    // Returns list of friends of the sender
+    function getMyFriendList() external view returns(friend[] memory) {
+        return userList[msg.sender].friendList;
+    }
 
-### Making a Progressive Web App
+    // Returns a unique code for the channel created between the two users
+    // Hash(key1,key2) where key1 is lexicographically smaller than key2
+    function _getChatCode(address pubkey1, address pubkey2) internal pure returns(bytes32) {
+        if(pubkey1 < pubkey2)
+            return keccak256(abi.encodePacked(pubkey1, pubkey2));
+        else
+            return keccak256(abi.encodePacked(pubkey2, pubkey1));
+    }
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+    // Sends a new message to a given friend
+    function sendMessage(address friend_key, string calldata _msg) external {
+        require(checkUserExists(msg.sender), "Create an account first!");
+        require(checkUserExists(friend_key), "User is not registered!");
+        require(checkAlreadyFriends(msg.sender,friend_key), "You are not friends with the given user");
 
-### Advanced Configuration
+        bytes32 chatCode = _getChatCode(msg.sender, friend_key);
+        message memory newMsg = message(msg.sender, block.timestamp, _msg);
+        allMessages[chatCode].push(newMsg);
+    }
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+    // Returns all the chat messages communicated in a channel
+    function readMessage(address friend_key) external view returns(message[] memory) {
+        bytes32 chatCode = _getChatCode(msg.sender, friend_key);
+        return allMessages[chatCode];
+    }
+}
 
-### Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### 'Run this code in remix Ethereum'
+### 'Deploy this after successful compile'
