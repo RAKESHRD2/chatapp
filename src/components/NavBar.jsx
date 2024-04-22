@@ -4,7 +4,7 @@ import { Button, Navbar } from "react-bootstrap";
 // This component renders the Navbar of our application
 export function NavBar( props ){
     return (
-        <Navbar style={{ backgroundColor: 'SlateBlue'}} variant="dark">
+        <Navbar style={{ backgroundColor: '#018749'}} variant="dark">
             <Navbar.Brand href="#home" style={{ color: 'white', fontStyle : "italic"}}> 
                 Avalanche Chat App 
             </Navbar.Brand>

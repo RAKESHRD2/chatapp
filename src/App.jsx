@@ -11,7 +11,7 @@ import { ethers } from "ethers";
 import { abi } from "./abi";
 
 // Add the contract address inside the quotes
-const CONTRACT_ADDRESS = "";
+const CONTRACT_ADDRESS = "0x6f08def14dfdf2bcc1e93547770522c302b2f85e";
 
 export function App(props) {
   const [friends, setFriends] = useState(null);
@@ -85,7 +85,7 @@ export function App(props) {
         await myContract.addFriend(publicKey, name);
         const frnd = { name: name, publicKey: publicKey };
         setFriends(friends.concat(frnd));
-      } catch (err) {
+      } catch (err) {      
         alert(
           "Friend already added! You can't be friends with the same person twice ;P"
         );
@@ -197,7 +197,7 @@ export function App(props) {
                 style={{
                   width: "100%",
                   alignSelf: "center",
-                  marginLeft: "15px",
+                  marginLeft: "5px",
                 }}
               >
                 <Card.Header>Chats</Card.Header>
@@ -211,12 +211,13 @@ export function App(props) {
           </div>
         </Col>
         <Col xs={8} style={{ paddingLeft: "0px" }}>
-          <div style={{ backgroundColor: "#DCDCDC", height: "100%" }}>
+          <div style={{ backgroundImage: "url('https://img.freepik.com/premium-vector/flat-speech-bubles-background_485157-94.jpg')", height: "100%" , opacity: '0.6', display: 'block'}}>
             {/* Chat header with refresh button, username and public key are rendered here */}
             <Row style={{ marginRight: "0px" }}>
               <Card
                 style={{
                   width: "100%",
+                  backgroundColor: "#A9BA9D",
                   alignSelf: "center",
                   margin: "0 0 5px 15px",
                 }}
@@ -252,7 +253,7 @@ export function App(props) {
                 bottom: "0px",
                 padding: "10px 45px 0 45px",
                 margin: "0 95px 0 0",
-                width: "97%",
+                width: "99%",
               }}
             >
               <Form
