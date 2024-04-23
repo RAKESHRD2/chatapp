@@ -11,7 +11,7 @@ import { ethers } from "ethers";
 import { abi } from "./abi";
 
 // Add the contract address inside the quotes
-const CONTRACT_ADDRESS = "0x6f08def14dfdf2bcc1e93547770522c302b2f85e";
+const CONTRACT_ADDRESS = "0x3287aa823f6611b6bc43b0909170dac4a607b5bb";
 
 export function App(props) {
   const [friends, setFriends] = useState(null);
@@ -78,7 +78,7 @@ export function App(props) {
     try {
       let present = await myContract.checkUserExists(publicKey);
       if (!present) {
-        alert("Address not found: Ask them to join the app :)");
+        alert("Address added: Ask them to join the app :)");
         return;
       }
       try {
